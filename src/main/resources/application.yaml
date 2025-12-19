@@ -1,0 +1,13 @@
+spring:
+  application:
+      name: Jitda
+
+  profiles:
+    default: dev
+
+
+info:
+  app:
+    name: '@project.name@'
+    description: '@project.description@'
+    version: '@project.version@'
