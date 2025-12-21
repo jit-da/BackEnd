@@ -7,16 +7,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RedisService {
 
     private final RedisTemplate redisTemplate;
+    private static final Logger log = LoggerFactory.getLogger(RedisService.class);
 
     public void setValues(String key, String data, Duration duration) {
         ValueOperations<String, Object> values = redisTemplate.opsForValue();

@@ -1,0 +1,163 @@
+package com.jitda.api.service.user.impl;
+
+import com.jitda.api.controller.auth.dto.request.LoginRequest;
+import com.jitda.api.controller.auth.dto.request.SignUpRequest;
+import com.jitda.api.controller.auth.dto.response.TokenResponse;
+import com.jitda.api.controller.user.dto.response.UserResponse;
+import com.jitda.api.service.user.UserService;
+import com.jitda.domain.grade.entity.Grade;
+import com.jitda.domain.grade.entity.GradeName;
+import com.jitda.domain.grade.repository.GradeRepository;
+import com.jitda.domain.users.entity.Provider;
+import com.jitda.domain.users.entity.User;
+import com.jitda.domain.users.repository.UserRepository;
+import com.jitda.global.config.jwt.service.JwtService;
+import com.jitda.global.config.redis.service.RedisService;
+import com.jitda.global.response.exception.BadRequestException;
+import com.jitda.global.response.exception.ConflictException;
+import com.jitda.global.response.exception.NotFoundException;
+import com.jitda.global.response.exception.ExceptionCode;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.util.Optional;
+import com.jitda.domain.users.entity.Role;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+    private final GradeRepository gradeRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final RedisService redisService;
+
+    @Override
+    public void signUp(SignUpRequest request) {
+        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+
+        if (userOptional.isPresent()) {
+            User existingUser = userOptional.get();
+            if (existingUser.getRole() == Role.GUEST) {
+                existingUser.updateName(request.getName());
+                existingUser.updateNickname(request.getNickname());
+                existingUser.updatePhone(request.getPhone());
+                existingUser.updateGender(request.getGender());
+                existingUser.updateBirth(request.getBirth());
+                existingUser.setRole(Role.USER);
+                if (request.getPassword() != null && !request.getPassword().isBlank()) {
+                    existingUser.setPassword(passwordEncoder.encode(request.getPassword()));
+                }
+                userRepository.save(existingUser);
+            } else {
+                throw new ConflictException(ExceptionCode.DUPLICATE_EMAIL);
+            }
+            return;
+        }
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new BadRequestException(ExceptionCode.PASSWORD_REQUIRED);
+        }
+
+        Pattern pattern = Pattern.compile("^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,15}$");
+        Matcher matcher = pattern.matcher(request.getPassword());
+        if (!matcher.matches()) {
+            throw new BadRequestException(ExceptionCode.INVALID_PASSWORD_FORMAT);
+        }
+
+        Grade grade = gradeRepository.findByName(GradeName.NONE).orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_GRADE));
+
+        User newUser = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .name(request.getName())
+                .nickname(request.getNickname())
+                .phone(request.getPhone())
+                .gender(request.getGender())
+                .birth(request.getBirth())
+                .role(Role.USER)
+                .grade(grade)
+                .provider(Provider.LOCAL)
+                .build();
+        userRepository.save(newUser);
+    }
+
+    @Override
+    public TokenResponse login(LoginRequest request, HttpServletResponse response) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_USER));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BadRequestException(ExceptionCode.UNMATCHED_PASSWORD);
+        }
+
+        String accessToken = jwtService.createAccessToken(user.getEmail(), Provider.LOCAL.name());
+        String refreshToken = jwtService.createRefreshToken(user.getEmail());
+
+        jwtService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
+        redisService.setValues(refreshToken, user.getEmail());
+
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    @Override
+    public TokenResponse reissue(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = jwtService.extractRefreshTokenFromCookie(request)
+                .orElseThrow(() -> new BadRequestException(ExceptionCode.INVALID_REFRESH_TOKEN));
+
+        String email = redisService.getValues(refreshToken);
+        if (email == null) {
+            throw new BadRequestException(ExceptionCode.INVALID_REFRESH_TOKEN);
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_USER));
+
+        String newAccessToken = jwtService.createAccessToken(email, user.getProvider().name());
+        String newRefreshToken = jwtService.createRefreshToken(email);
+
+        jwtService.sendAccessAndRefreshToken(response, newAccessToken, newRefreshToken);
+        redisService.setValues(newRefreshToken, email);
+
+        return TokenResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+    }
+
+    @Override
+    public UserResponse getUserInfo(User user) {
+        return UserResponse.of(user);
+    }
+
+    @Override
+    public void logout(HttpServletRequest request) {
+        String accessToken = jwtService.extractAccessToken(request)
+                .orElseThrow(() -> new BadRequestException(ExceptionCode.INVALID_ACCESS_TOKEN));
+
+        String email = jwtService.extractEmail(accessToken)
+                .orElseThrow(() -> new BadRequestException(ExceptionCode.INVALID_ACCESS_TOKEN));
+
+        Long expiration = jwtService.getExpiration(accessToken);
+
+        redisService.setValues(accessToken, "logout", Duration.ofMillis(expiration));
+    }
+
+    @Override
+    public void deleteUser(User user) {
+        userRepository.delete(user);
+    }
+}

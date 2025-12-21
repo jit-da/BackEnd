@@ -82,4 +82,8 @@ public class Product extends BaseEntity {
         this.categoryMedium = categoryMedium;
         this.categorySmall = categorySmall;
     }
+
+    public Long getId() {
+        return id;
+    }
 }

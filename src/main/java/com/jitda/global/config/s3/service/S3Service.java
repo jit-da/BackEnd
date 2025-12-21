@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,12 +20,12 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3Service {
 
     private final AmazonS3Client amazonS3Client;
+    private static final Logger log = LoggerFactory.getLogger(S3Service.class);
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;

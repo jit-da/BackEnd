@@ -14,13 +14,43 @@ import java.util.Map;
 @Getter
 public class OAuth2Attributes {
 
-    private String nameAttributeKey; 
+    private String nameAttributeKey;
     private OAuth2UserInfo oauth2UserInfo;
 
-    @Builder
-    private OAuth2Attributes(String nameAttributeKey, OAuth2UserInfo oauth2UserInfo) {
+    public OAuth2Attributes(String nameAttributeKey, OAuth2UserInfo oauth2UserInfo) {
         this.nameAttributeKey = nameAttributeKey;
         this.oauth2UserInfo = oauth2UserInfo;
+    }
+
+    public static OAuth2AttributesBuilder builder() {
+        return new OAuth2AttributesBuilder();
+    }
+
+    public static class OAuth2AttributesBuilder {
+        private String nameAttributeKey;
+        private OAuth2UserInfo oauth2UserInfo;
+
+        public OAuth2AttributesBuilder nameAttributeKey(String nameAttributeKey) {
+            this.nameAttributeKey = nameAttributeKey;
+            return this;
+        }
+
+        public OAuth2AttributesBuilder oauth2UserInfo(OAuth2UserInfo oauth2UserInfo) {
+            this.oauth2UserInfo = oauth2UserInfo;
+            return this;
+        }
+
+        public OAuth2Attributes build() {
+            return new OAuth2Attributes(nameAttributeKey, oauth2UserInfo);
+        }
+    }
+
+    public OAuth2UserInfo getOauth2UserInfo() {
+        return oauth2UserInfo;
+    }
+
+    public String getNameAttributeKey() {
+        return nameAttributeKey;
     }
 
     public static OAuth2Attributes of(Provider provider,

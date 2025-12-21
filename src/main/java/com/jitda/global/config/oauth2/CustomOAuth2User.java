@@ -21,4 +21,8 @@ public class CustomOAuth2User extends DefaultOAuth2User {
         this.user = user;
     }
 
+    public User getUser() {
+        return user;
+    }
+
 }

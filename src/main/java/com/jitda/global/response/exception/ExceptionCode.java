@@ -7,13 +7,25 @@ import static org.springframework.http.HttpStatus.*;
 public enum ExceptionCode {
 
     // 400 에러
+    UNMATCHED_PASSWORD("E_AUTH_001", BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
+    INVALID_PASSWORD_FORMAT("E_AUTH_004", BAD_REQUEST, "비밀번호 형식이 올바르지 않습니다."),
+    PASSWORD_REQUIRED("E_AUTH_005", BAD_REQUEST, "비밀번호가 필수입니다."),
 
     // 401 에러
+    INVALID_ACCESS_TOKEN("E_AUTH_002", UNAUTHORIZED, "AccessToken이 유효하지 않습니다."),
+    INVALID_REFRESH_TOKEN("E_AUTH_003", UNAUTHORIZED, "RefreshToken이 유효하지 않습니다."),
     UNAUTHORIZED_ATK_ERROR("E_UAT", UNAUTHORIZED, "AccessToken is invalid"),
     UNAUTHORIZED_RTK_ERROR("E_URT", UNAUTHORIZED, "RefreshToken is invalid"),
     EXPIRED_TOKEN_ERROR("E_EXT", UNAUTHORIZED, "JWT 토큰이 만료되었습니다."),
     UNSUPPORTED_TOKEN_ERROR("E_UST", UNAUTHORIZED, "지원하지 않는 JWT 토큰입니다."),
     EMPTY_TOKEN_ERROR("E_EMT", UNAUTHORIZED, "JWT 토큰이 비어 있습니다."),
+
+    // 404 에러
+    NOT_FOUND_USER("E_USER_001", NOT_FOUND, "해당하는 유저가 없습니다."),
+    NOT_FOUND_GRADE("E_GRADE_001", NOT_FOUND, "해당하는 등급이 없습니다."),
+
+    // 409 에러
+    DUPLICATE_EMAIL("E_USER_002", CONFLICT, "중복된 이메일입니다."),
 
     // 500 에러
     INTERNAL_SERVER_ERROR("E_SYS", HttpStatus.INTERNAL_SERVER_ERROR, "알 수 없는 오류가 발생했습니다."),

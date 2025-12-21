@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Date;
@@ -22,8 +24,9 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Getter
-@Slf4j
 public class JwtService {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtService.class);
 
     @Value("${jwt.secretKey}")
     private String secretKey;
@@ -116,7 +119,7 @@ public class JwtService {
                     .getClaim(PROVIDER_USER_ID_CLAIM)
                     .asString());
         } catch (Exception e) {
-            log.error("엑세스 토큰이 유효하지 않습니다.");
+            log.error("엑세스 토큰에서 ProviderUserId 추출 실패. 타입: {}, 메시지: {}", e.getClass().getSimpleName(), e.getMessage());
             return Optional.empty();
         }
     }
@@ -153,6 +156,33 @@ public class JwtService {
         }
     }
 
+    public Optional<String> extractEmail(String accessToken) {
+        try {
+            String providerUserId = JWT.require(Algorithm.HMAC512(secretKey))
+                    .build()
+                    .verify(accessToken)
+                    .getClaim(PROVIDER_USER_ID_CLAIM)
+                    .asString();
+            String provider = JWT.require(Algorithm.HMAC512(secretKey))
+                    .build()
+                    .verify(accessToken)
+                    .getClaim(PROVIDER_CLAIM)
+                    .asString();
+            return Optional.of(providerUserId.replace(provider, ""));
+        } catch (Exception e) {
+            log.error("엑세스 토큰이 유효하지 않습니다.");
+            return Optional.empty();
+        }
+    }
+
+    public Long getExpiration(String accessToken) {
+        Date expiresAt = JWT.require(Algorithm.HMAC512(secretKey))
+                .build()
+                .verify(accessToken)
+                .getExpiresAt();
+        return expiresAt.getTime() - new Date().getTime();
+    }
+
 
     /**
      * AccessToken 헤더 설정
@@ -176,7 +206,7 @@ public class JwtService {
             JWT.require(Algorithm.HMAC512(secretKey)).build().verify(token);
             return true;
         } catch (Exception e) {
-            log.error("유효하지 않은 토큰입니다. {}", e.getMessage());
+            log.error("유효하지 않은 토큰입니다. 타입: {}, 메시지: {}", e.getClass().getSimpleName(), e.getMessage());
             return false;
         }
     }

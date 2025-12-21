@@ -12,4 +12,7 @@ public abstract class CustomException extends RuntimeException {
         this.exceptionCode = exceptionCode;
     }
 
+    public ExceptionCode getExceptionCode() {
+        return exceptionCode;
+    }
 }

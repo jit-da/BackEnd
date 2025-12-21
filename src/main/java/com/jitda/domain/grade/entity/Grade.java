@@ -46,4 +46,8 @@ public class Grade extends BaseEntity {
         this.description = description;
         this.monthlyVolume = monthlyVolume;
     }
+
+    public GradeName getName() {
+        return name;
+    }
 }
