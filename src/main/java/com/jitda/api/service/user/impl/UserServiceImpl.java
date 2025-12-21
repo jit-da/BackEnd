@@ -148,12 +148,6 @@ public class UserServiceImpl implements UserService {
         String accessToken = jwtService.extractAccessToken(request)
                 .orElseThrow(() -> new BadRequestException(ExceptionCode.INVALID_ACCESS_TOKEN));
 
-        String email = jwtService.extractEmail(accessToken)
-                .orElseThrow(() -> new BadRequestException(ExceptionCode.INVALID_ACCESS_TOKEN));
-
-        Long expiration = jwtService.getExpiration(accessToken);
-
-        redisService.setValues(accessToken, "logout", Duration.ofMillis(expiration));
     }
 
     @Override

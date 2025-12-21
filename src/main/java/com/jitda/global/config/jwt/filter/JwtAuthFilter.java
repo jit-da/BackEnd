@@ -18,8 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,33 +25,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
+@Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
     private static final List<String> EXCLUDED_URLS = Arrays.asList(
-            "/login",
-            "/api/v1/auth/signup",
-            "/api/v1/auth/login",
-            "/api/v1/auth/reissue",
-            "/favicon.ico",
-            "/swagger-ui.html",
-            "/swagger-ui", // Covers /swagger-ui/**
-            "/v3/api-docs", // Covers /v3/api-docs/**
-            "/api-docs", // Covers /api-docs/**
-            "/swagger", // User provided
-            "/ws", // Covers /ws/**
-            "/default-ui.css",
-            "/css", // Covers /css/**
-            "/js" // Covers /js/**
-    );
+            "/login", "/api/v1/auth/login", "/api/v1/auth/signup", "/favicon.ico",
+            "/api/v1/auth/reissue", "/swagger", "/swagger-ui.html",
+            "/swagger-ui/index.html", "/swagger-ui", "/v3/api-docs", "/ws", "/default-ui.css");
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
-
-    public JwtAuthFilter(JwtService jwtService, UserRepository userRepository) {
-        this.jwtService = jwtService;
-        this.userRepository = userRepository;
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -76,13 +58,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (accessToken != null) {
             checkAccessTokenAndAuthentication(accessToken, filterChain, request, response);
+            return;
         }
 
-        filterChain.doFilter(request, response);
+        // AccessToken이 유효하지 않으면 클라이언트에 401 응답 전송
+        sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "AccessToken is invalid");
     }
 
     private void checkAccessTokenAndAuthentication(String accessToken, FilterChain filterChain, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         jwtService.extractProviderUserId(accessToken).flatMap(userRepository::findByEmail).ifPresent(this::saveAuthentication);
+
+        filterChain.doFilter(request, response);
     }
 
     private void saveAuthentication(User user) {
