@@ -1,7 +1,9 @@
 package com.jitda.api.controller.auth.dto.request;
 
+import com.jitda.domain.common.YN;
 import com.jitda.domain.grade.entity.Grade;
 import com.jitda.domain.users.entity.Gender;
+import com.jitda.domain.users.entity.Provider;
 import com.jitda.domain.users.entity.Role;
 import com.jitda.domain.users.entity.User;
 import lombok.Getter;
@@ -10,70 +12,77 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 @Getter
 @NoArgsConstructor
 public class SignUpRequest {
 
-    @Email
-    @NotBlank
+    @NotBlank(message = "이메일은 필수 입력 항목입니다.")
+    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    @Size(max = 200, message = "이메일은 200자 이하여야 합니다.")
     private String email;
 
     private String password;
 
-    @NotBlank
+    private String passwordConfirm;
+
+    @NotBlank(message = "이름은 필수 입력 항목입니다.")
+    @Size(max = 100, message = "이름은 100자 이하여야 합니다.")
     private String name;
 
-    @NotBlank
+    @NotBlank(message = "닉네임은 필수 입력 항목입니다.")
+    @Size(max = 100, message = "닉네임은 100자 이하여야 합니다.")
     private String nickname;
 
-    @NotBlank
+    @Pattern(regexp = "^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$", 
+            message = "올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)")
     private String phone;
 
     private Gender gender;
 
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", 
+            message = "생년월일은 YYYY-MM-DD 형식으로 입력해주세요.")
     private String birth;
 
-    public String getEmail() {
-        return email;
-    }
+    @NotNull(message = "개인정보 처리방침 동의는 필수입니다.")
+    private YN agreePrivacy;
 
-    public String getPassword() {
-        return password;
-    }
+    @NotNull(message = "고유식별정보 처리 동의는 필수입니다.")
+    private YN agreeUniqueInfo;
 
-    public String getName() {
-        return name;
-    }
+    @NotNull(message = "서비스 이용약관 동의는 필수입니다.")
+    private YN agreeService;
 
-    public String getNickname() {
-        return nickname;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public Gender getGender() {
-        return gender;
-    }
-
-    public String getBirth() {
-        return birth;
-    }
+    private YN agreeTelCarrier;
 
     public User toEntity(PasswordEncoder passwordEncoder, Grade grade) {
-        return User.builder()
+        User.UserBuilder builder = User.builder()
                 .email(email)
-                .password(passwordEncoder.encode(password))
+                .provider(Provider.LOCAL)
+                .role(Role.USER)
                 .name(name)
                 .nickname(nickname)
                 .phone(phone)
                 .gender(gender)
                 .birth(birth)
-                .role(Role.USER)
+                .agreePrivacy(agreePrivacy != null ? agreePrivacy : YN.N)
+                .agreeUniqueInfo(agreeUniqueInfo != null ? agreeUniqueInfo : YN.N)
+                .agreeService(agreeService != null ? agreeService : YN.N)
+                .agreeTelCarrier(agreeTelCarrier != null ? agreeTelCarrier : YN.N)
                 .grade(grade)
-                .build();
+                .point(0);
+        
+        if (password != null && !password.isBlank()) {
+            builder.password(passwordEncoder.encode(password));
+        }
+        
+        return builder.build();
+    }
+
+    public boolean isPasswordMatch() {
+        return password != null && password.equals(passwordConfirm);
     }
 }

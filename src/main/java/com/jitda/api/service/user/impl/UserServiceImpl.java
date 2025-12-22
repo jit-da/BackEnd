@@ -65,30 +65,22 @@ public class UserServiceImpl implements UserService {
             return;
         }
 
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new BadRequestException(ExceptionCode.PASSWORD_REQUIRED);
-        }
+        // 비밀번호가 제공된 경우에만 검증
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            if (!request.isPasswordMatch()) {
+                throw new BadRequestException(ExceptionCode.UNMATCHED_PASSWORD);
+            }
 
-        Pattern pattern = Pattern.compile("^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,15}$");
-        Matcher matcher = pattern.matcher(request.getPassword());
-        if (!matcher.matches()) {
-            throw new BadRequestException(ExceptionCode.INVALID_PASSWORD_FORMAT);
+            Pattern pattern = Pattern.compile("^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,15}$");
+            Matcher matcher = pattern.matcher(request.getPassword());
+            if (!matcher.matches()) {
+                throw new BadRequestException(ExceptionCode.INVALID_PASSWORD_FORMAT);
+            }
         }
 
         Grade grade = gradeRepository.findByName(GradeName.NONE).orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_GRADE));
 
-        User newUser = User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .nickname(request.getNickname())
-                .phone(request.getPhone())
-                .gender(request.getGender())
-                .birth(request.getBirth())
-                .role(Role.USER)
-                .grade(grade)
-                .provider(Provider.LOCAL)
-                .build();
+        User newUser = request.toEntity(passwordEncoder, grade);
         userRepository.save(newUser);
     }
 
