@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -61,14 +62,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        // AccessToken이 유효하지 않으면 클라이언트에 401 응답 전송
-        sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "AccessToken is invalid");
+        // AccessToken이 없거나 유효하지 않으면 필터 체인을 계속 진행
+        // Spring Security의 AuthenticationEntryPoint가 401 응답을 처리함
+        filterChain.doFilter(request, response);
     }
 
     private void checkAccessTokenAndAuthentication(String accessToken, FilterChain filterChain, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        jwtService.extractProviderUserId(accessToken).flatMap(userRepository::findByEmail).ifPresent(this::saveAuthentication);
+        Optional<User> userOptional = jwtService.extractProviderUserId(accessToken)
+                .flatMap(userRepository::findByEmail);
 
-        filterChain.doFilter(request, response);
+        if (userOptional.isPresent()) {
+            saveAuthentication(userOptional.get());
+            filterChain.doFilter(request, response);
+        } else {
+            // 토큰은 유효하지만 사용자를 찾을 수 없는 경우
+            log.warn("유효한 토큰이지만 사용자를 찾을 수 없습니다. 토큰: {}", accessToken.substring(0, Math.min(20, accessToken.length())));
+            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "사용자를 찾을 수 없습니다.");
+        }
     }
 
     private void saveAuthentication(User user) {
