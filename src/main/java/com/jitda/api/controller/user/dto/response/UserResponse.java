@@ -9,7 +9,6 @@ public class UserResponse {
     private String email;
     private String name;
     private String phone;
-    private String gender;
     private String gradeName;
     private String imageUrl;
     private int point;
@@ -22,7 +21,6 @@ public class UserResponse {
         private String email;
         private String name;
         private String phone;
-        private String gender;
         private String gradeName;
         private String imageUrl;
         private int point;
@@ -39,11 +37,6 @@ public class UserResponse {
 
         public UserResponseBuilder phone(String phone) {
             this.phone = phone;
-            return this;
-        }
-
-        public UserResponseBuilder gender(String gender) {
-            this.gender = gender;
             return this;
         }
 
@@ -67,7 +60,6 @@ public class UserResponse {
             userResponse.email = this.email;
             userResponse.name = this.name;
             userResponse.phone = this.phone;
-            userResponse.gender = this.gender;
             userResponse.gradeName = this.gradeName;
             userResponse.imageUrl = this.imageUrl;
             userResponse.point = this.point;
@@ -80,8 +72,8 @@ public class UserResponse {
                 .email(user.getEmail())
                 .name(user.getName())
                 .phone(user.getPhone())
-                .gender(user.getGender().toString())
-                .gradeName(user.getGrade().getName().name())
+                .gradeName(user.getGrade() != null && user.getGrade().getName() != null 
+                        ? user.getGrade().getName().name() : null)
                 .imageUrl(user.getImageUrl())
                 .point(user.getPoint())
                 .build();

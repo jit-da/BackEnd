@@ -42,17 +42,8 @@ public class User extends BaseEntity {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "nickname", nullable = false, length = 100)
-    private String nickname;
-
-    @Column(name = "birth", length = 20)
-    private String birth;
-
     @Column(name = "phone", length = 20)
     private String phone;
-
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;
@@ -84,17 +75,14 @@ public class User extends BaseEntity {
     @ColumnDefault("0")
     private int point;
 
-    public User(String email, String password, Provider provider, Role role, String name, String nickname, String birth, String phone, Gender gender, String imageUrl, YN agreePrivacy, YN agreeUniqueInfo, YN agreeService, YN agreeTelCarrier, Grade grade, int point) {
+    public User(String email, String password, Provider provider, Role role, String name, String phone, String imageUrl, YN agreePrivacy, YN agreeUniqueInfo, YN agreeService, YN agreeTelCarrier, Grade grade, int point) {
 
         this.email = email;
         this.password = password;
         this.provider = provider;
         this.role = role;
         this.name = name;
-        this.nickname = nickname;
-        this.birth = birth;
         this.phone = phone;
-        this.gender = gender;
         this.imageUrl = imageUrl;
         this.agreePrivacy = agreePrivacy;
         this.agreeUniqueInfo = agreeUniqueInfo;
@@ -115,10 +103,7 @@ public class User extends BaseEntity {
         private Provider provider;
         private Role role;
         private String name;
-        private String nickname;
-        private String birth;
         private String phone;
-        private Gender gender;
         private String imageUrl;
         private YN agreePrivacy;
         private YN agreeUniqueInfo;
@@ -152,23 +137,8 @@ public class User extends BaseEntity {
             return this;
         }
 
-        public UserBuilder nickname(String nickname) {
-            this.nickname = nickname;
-            return this;
-        }
-
-        public UserBuilder birth(String birth) {
-            this.birth = birth;
-            return this;
-        }
-
         public UserBuilder phone(String phone) {
             this.phone = phone;
-            return this;
-        }
-
-        public UserBuilder gender(Gender gender) {
-            this.gender = gender;
             return this;
         }
 
@@ -208,7 +178,7 @@ public class User extends BaseEntity {
         }
 
         public User build() {
-            return new User(email, password, provider, role, name, nickname, birth, phone, gender, imageUrl, agreePrivacy, agreeUniqueInfo, agreeService, agreeTelCarrier, grade, point);
+            return new User(email, password, provider, role, name, phone, imageUrl, agreePrivacy, agreeUniqueInfo, agreeService, agreeTelCarrier, grade, point);
         }
     }
 
@@ -236,20 +206,8 @@ public class User extends BaseEntity {
         return name;
     }
 
-    public String getNickname() {
-        return nickname;
-    }
-
-    public String getBirth() {
-        return birth;
-    }
-
     public String getPhone() {
         return phone;
-    }
-
-    public Gender getGender() {
-        return gender;
     }
 
     public String getImageUrl() {
@@ -284,20 +242,8 @@ public class User extends BaseEntity {
         this.name = name;
     }
 
-    public void updateNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
     public void updatePhone(String phone) {
         this.phone = phone;
-    }
-
-    public void updateGender(Gender gender) {
-        this.gender = gender;
-    }
-
-    public void updateBirth(String birth) {
-        this.birth = birth;
     }
 
     public void setRole(Role role) {

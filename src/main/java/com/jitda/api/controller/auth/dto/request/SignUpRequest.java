@@ -2,7 +2,6 @@ package com.jitda.api.controller.auth.dto.request;
 
 import com.jitda.domain.common.YN;
 import com.jitda.domain.grade.entity.Grade;
-import com.jitda.domain.users.entity.Gender;
 import com.jitda.domain.users.entity.Provider;
 import com.jitda.domain.users.entity.Role;
 import com.jitda.domain.users.entity.User;
@@ -33,19 +32,9 @@ public class SignUpRequest {
     @Size(max = 100, message = "이름은 100자 이하여야 합니다.")
     private String name;
 
-    @NotBlank(message = "닉네임은 필수 입력 항목입니다.")
-    @Size(max = 100, message = "닉네임은 100자 이하여야 합니다.")
-    private String nickname;
-
     @Pattern(regexp = "^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$", 
             message = "올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)")
     private String phone;
-
-    private Gender gender;
-
-    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", 
-            message = "생년월일은 YYYY-MM-DD 형식으로 입력해주세요.")
-    private String birth;
 
     @NotNull(message = "개인정보 처리방침 동의는 필수입니다.")
     private YN agreePrivacy;
@@ -64,10 +53,7 @@ public class SignUpRequest {
                 .provider(Provider.LOCAL)
                 .role(Role.USER)
                 .name(name)
-                .nickname(nickname)
                 .phone(phone)
-                .gender(gender)
-                .birth(birth)
                 .agreePrivacy(agreePrivacy != null ? agreePrivacy : YN.N)
                 .agreeUniqueInfo(agreeUniqueInfo != null ? agreeUniqueInfo : YN.N)
                 .agreeService(agreeService != null ? agreeService : YN.N)

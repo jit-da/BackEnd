@@ -50,10 +50,7 @@ public class UserServiceImpl implements UserService {
             User existingUser = userOptional.get();
             if (existingUser.getRole() == Role.GUEST) {
                 existingUser.updateName(request.getName());
-                existingUser.updateNickname(request.getNickname());
                 existingUser.updatePhone(request.getPhone());
-                existingUser.updateGender(request.getGender());
-                existingUser.updateBirth(request.getBirth());
                 existingUser.setRole(Role.USER);
                 if (request.getPassword() != null && !request.getPassword().isBlank()) {
                     existingUser.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -131,8 +128,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserResponse getUserInfo(User user) {
-        return UserResponse.of(user);
+        // Grade를 함께 조회하기 위해 fetch join 사용
+        User userWithGrade = userRepository.findByIdWithGrade(user.getId())
+                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_USER));
+        
+        return UserResponse.of(userWithGrade);
     }
 
     @Override
