@@ -44,7 +44,14 @@ public enum ExceptionCode {
     FILE_TRANSACTION_FAIL("E_S3_001", BAD_REQUEST, "파일 변환에 실패했습니다."),
     FILE_UPLOAD_FAIL("E_S3_002", BAD_REQUEST, "파일 업로드에 실패했습니다."),
     FILE_DOWNLOAD_FAIL("E_S3_003", BAD_REQUEST, "파일 다운로드에 실패했습니다."),
-    INVALID_FILE_EXTENSION("E_S3_004", BAD_REQUEST, "잘못된 파일 확장자입니다.");
+    INVALID_FILE_EXTENSION("E_S3_004", BAD_REQUEST, "잘못된 파일 확장자입니다."),
+
+    // SMS
+    SMS_SEND_FAIL("E_SMS_001", BAD_REQUEST, "문자 발송에 실패했습니다."),
+    INVALID_VERIFICATION_CODE("E_SMS_002", BAD_REQUEST, "인증번호가 올바르지 않습니다."),
+    EXPIRED_VERIFICATION_CODE("E_SMS_003", BAD_REQUEST, "인증번호가 만료되었습니다."),
+    PHONE_VERIFICATION_REQUIRED("E_SMS_004", BAD_REQUEST, "휴대폰 인증이 필요합니다."),
+    PHONE_VERIFICATION_NOT_COMPLETED("E_SMS_005", BAD_REQUEST, "휴대폰 인증이 완료되지 않았습니다.");
 
 
 

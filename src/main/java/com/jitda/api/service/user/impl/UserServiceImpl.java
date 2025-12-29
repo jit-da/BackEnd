@@ -4,6 +4,7 @@ import com.jitda.api.controller.auth.dto.request.LoginRequest;
 import com.jitda.api.controller.auth.dto.request.SignUpRequest;
 import com.jitda.api.controller.auth.dto.response.TokenResponse;
 import com.jitda.api.controller.user.dto.response.UserResponse;
+import com.jitda.api.service.sms.SmsService;
 import com.jitda.api.service.user.UserService;
 import com.jitda.domain.grade.entity.Grade;
 import com.jitda.domain.grade.entity.GradeName;
@@ -24,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.Optional;
 import com.jitda.domain.users.entity.Role;
 import java.util.regex.Pattern;
@@ -41,9 +41,16 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RedisService redisService;
+    private final SmsService smsService;
 
     @Override
     public void signUp(SignUpRequest request) {
+        // 전화번호 인증 완료 여부 확인
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+            if (!smsService.isPhoneVerified(request.getPhone())) {
+                throw new BadRequestException(ExceptionCode.PHONE_VERIFICATION_NOT_COMPLETED);
+            }
+        }
         Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
 
         if (userOptional.isPresent()) {
@@ -139,9 +146,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void logout(HttpServletRequest request) {
-        String accessToken = jwtService.extractAccessToken(request)
+        jwtService.extractAccessToken(request)
                 .orElseThrow(() -> new BadRequestException(ExceptionCode.INVALID_ACCESS_TOKEN));
-
+        // TODO: 로그아웃 로직 구현
     }
 
     @Override
